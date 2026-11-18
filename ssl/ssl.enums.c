@@ -610,8 +610,9 @@ static int decode_HandshakeType_Certificate(ssl_obj *ssl,
                                             int dir,
                                             segment *seg,
                                             Data *data) {
-  UINT4 len, exlen, ex;
+  UINT4 cert_list_len, exlen, ex;
   Data cert;
+  Data cert_list, cert_exts;
   int r;
 
   struct json_object *jobj;
@@ -626,29 +627,55 @@ static int decode_HandshakeType_Certificate(ssl_obj *ssl,
     SSL_DECODE_OPAQUE_ARRAY(ssl, "certificate request context", -((1 << 7) - 1),
                             0, data, NULL);
   }
-  SSL_DECODE_UINT24(ssl, "certificates len", 0, data, &len);
+  SSL_DECODE_UINT24(ssl, "certificates len", 0, data, &cert_list_len);
+  if(cert_list_len > data->len) {
+    fprintf(stderr,
+            "Error: short certificate list: expected %u got %d\n",
+            cert_list_len, data->len);
+    ERETURN(R_EOD);
+  }
+
+  INIT_DATA(cert_list, data->data, cert_list_len);
+  data->data += cert_list_len;
+  data->len -= cert_list_len;
 
   json_object_object_add(jobj, "cert_chain", json_object_new_array());
 
-  while(len) {
-    SSL_DECODE_OPAQUE_ARRAY(ssl, "certificate", -((1 << 23) - 1), 0, data,
-                            &cert);
+  while(cert_list.len) {
+    SSL_DECODE_OPAQUE_ARRAY(ssl, "certificate", -((1 << 23) - 1), 0,
+                            &cert_list, &cert);
     sslx_print_certificate(ssl, &cert, P_ND);
-    len -= (cert.len + 3);
     if(ssl->version == TLSV13_VERSION) {  // TLS 1.3 has certificate extensions
-      SSL_DECODE_UINT16(ssl, "certificate extensions len", 0, data, &exlen);
-      len -= 2;
-      while(exlen) {
-        SSL_DECODE_UINT16(ssl, "extension type", 0, data, &ex);
-        len -= (2 + ex);
-        if(ssl_decode_switch(ssl, extension_decoder, ex, dir, seg, data) ==
-           R_NOT_FOUND) {
-          decode_extension(ssl, dir, seg, data);
+      SSL_DECODE_UINT16(ssl, "certificate extensions len", 0, &cert_list,
+                        &exlen);
+      if(exlen > cert_list.len) {
+        fprintf(stderr,
+                "Error: short certificate extensions: expected %u got %d\n",
+                exlen, cert_list.len);
+        ERETURN(R_EOD);
+      }
+
+      INIT_DATA(cert_exts, cert_list.data, exlen);
+      cert_list.data += exlen;
+      cert_list.len -= exlen;
+
+      while(cert_exts.len) {
+        int before = cert_exts.len;
+        SSL_DECODE_UINT16(ssl, "extension type", 0, &cert_exts, &ex);
+        if(ssl_decode_switch(ssl, extension_decoder, ex, dir, seg,
+                             &cert_exts) == R_NOT_FOUND) {
+          if((r = decode_extension(ssl, dir, seg, &cert_exts)))
+            ERETURN(r);
           P_(P_RH) {
             explain(ssl, "Extension type: %u not yet implemented in ssldump\n",
                     ex);
           }
           continue;
+        }
+        if(cert_exts.len >= before) {
+          fprintf(stderr, "Error: certificate extension %u made no progress\n",
+                  ex);
+          ERETURN(R_EOD);
         }
         LF;
       }
@@ -665,6 +692,11 @@ static int decode_HandshakeType_SessionTicket(ssl_obj *ssl,
   int r;
   UINT4 exlen, ex, val;
   extern decoder extension_decoder[];
+
+  struct json_object *jobj;
+  jobj = ssl->cur_json_st;
+  json_object_object_add(jobj, "handshake_type",
+                         json_object_new_string("SessionTicket"));
 
   SSL_DECODE_UINT32(ssl, "ticket_lifetime", P_HL, data, &val);
   if(ssl->version == TLSV13_VERSION) {
@@ -701,21 +733,47 @@ static int decode_HandshakeType_EncryptedExtensions(ssl_obj *ssl,
                                                     Data *data) {
   int r;
   UINT4 exlen, ex;
+  Data extensions;
   extern decoder extension_decoder[];
 
+  struct json_object *jobj;
+  jobj = ssl->cur_json_st;
+  json_object_object_add(jobj, "handshake_type",
+                         json_object_new_string("EncryptedExtensions"));
+
+  ssl_update_handshake_messages(ssl, data);
   SSL_DECODE_UINT16(ssl, 0, 0, data, &exlen);
+  if(exlen > data->len) {
+    fprintf(stderr,
+            "Error: short EncryptedExtensions: expected %u got %d\n", exlen,
+            data->len);
+    ERETURN(R_EOD);
+  }
+
+  INIT_DATA(extensions, data->data, exlen);
+  data->data += exlen;
+  data->len -= exlen;
   LF;
-  if(exlen) {
-    while(data->len) {
-      SSL_DECODE_UINT16(ssl, "extension type", 0, data, &ex);
-      if(ssl_decode_switch(ssl, extension_decoder, ex, dir, seg, data) ==
+  if(extensions.len) {
+    while(extensions.len) {
+      int before = extensions.len;
+      SSL_DECODE_UINT16(ssl, "extension type", 0, &extensions, &ex);
+      if(ssl_decode_switch(ssl, extension_decoder, ex, dir, seg,
+                           &extensions) ==
          R_NOT_FOUND) {
-        decode_extension(ssl, dir, seg, data);
+        if((r = decode_extension(ssl, dir, seg, &extensions)))
+          ERETURN(r);
         P_(P_RH) {
           explain(ssl, "Extension type: %u not yet implemented in ssldump\n",
                   ex);
         }
         continue;
+      }
+      if(extensions.len >= before) {
+        fprintf(stderr, "Error: EncryptedExtensions extension %u made no "
+                        "progress\n",
+                ex);
+        ERETURN(R_EOD);
       }
       LF;
     }
@@ -874,16 +932,25 @@ static int decode_HandshakeType_Finished(ssl_obj *ssl,
                          json_object_new_string("Finished"));
 
   LF;
+  ssl_update_handshake_messages(ssl, data);
+  json_object_object_add(jobj, "verify_data_len",
+                         json_object_new_int(data->len));
   switch(ssl->version) {
     case 0x300:
       SSL_DECODE_OPAQUE_ARRAY(ssl, "md5_hash", 16, P_ND, data, 0);
 
       SSL_DECODE_OPAQUE_ARRAY(ssl, "sha_hash", 20, P_ND, data, 0);
       break;
-    case 0x301:
+    case TLSV1_VERSION:
+    case TLSV11_VERSION:
+    case TLSV12_VERSION:
       SSL_DECODE_OPAQUE_ARRAY(ssl, "verify_data", 12, P_ND, data, 0);
       P_(P_ND)
       LF;
+      break;
+    case TLSV13_VERSION:
+      if(data->len)
+        SSL_DECODE_OPAQUE_ARRAY(ssl, "verify_data", data->len, P_ND, data, 0);
       break;
   }
 
@@ -895,6 +962,16 @@ static int decode_HandshakeType_KeyUpdate(ssl_obj *ssl,
                                           int dir,
                                           segment *seg,
                                           Data *data) {
+  int r;
+  UINT4 update_request;
+  struct json_object *jobj;
+  jobj = ssl->cur_json_st;
+  json_object_object_add(jobj, "handshake_type",
+                         json_object_new_string("KeyUpdate"));
+
+  if(data->len) {
+    SSL_DECODE_UINT8(ssl, "update_request", P_HL, data, &update_request);
+  }
   LF;
   ssl_tls13_update_keying_material(ssl, ssl->decoder, dir);
   return 0;
@@ -1755,7 +1832,7 @@ static int decode_extension_supported_versions(ssl_obj *ssl,
     SSL_DECODE_UINT16(ssl, "supported version", 0, data, &version);
     explain(ssl, "version: %u.%u", (version >> 8) & 0xff, version & 0xff);
     len -= 2;
-    if(len)
+    if(len && !(SSL_print_flags & SSL_PRINT_JSON))
       printf("\n");
   }
   if(dir == DIR_R2I)
@@ -1783,7 +1860,7 @@ static int decode_extension_client_certificate_type(ssl_obj *ssl,
                     SSL_PRINT_ALL, data, &certificate_type);
     len -= 1;
     data += 1;
-    if(len)
+    if(len && !(SSL_print_flags & SSL_PRINT_JSON))
       printf("\n");
   }
   if(dir == DIR_R2I)
@@ -1808,7 +1885,7 @@ static int decode_extension_server_certificate_type(ssl_obj *ssl,
                     SSL_PRINT_ALL, data, &certificate_type);
     len -= 1;
     data += 1;
-    if(len)
+    if(len && !(SSL_print_flags & SSL_PRINT_JSON))
       printf("\n");
   }
   if(dir == DIR_R2I)

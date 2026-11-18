@@ -390,7 +390,7 @@ structures.
 _ssldump_ can decrypt traffic between two hosts if the following two
 conditions are met:
     1. ssldump has the keys.
-    2. Static RSA was used.
+    2. Static RSA was used, or a TLS 1.3 `SSLKEYLOGFILE` was supplied with `-l`.
 In any other case, once encryption starts,
 _ssldump_ will only be able to determine the
 record type. Consider the following section of a trace.

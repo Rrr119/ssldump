@@ -139,6 +139,12 @@ if(BUILD_TESTING)
                 $<TARGET_FILE:ssldump>
                 ${PROJECT_SOURCE_DIR}/samples/tls1.2_aes256.pcap
         )
+        add_test(NAME tls13_pcap
+            COMMAND ${Python3_EXECUTABLE}
+                ${PROJECT_SOURCE_DIR}/tests/test_tls13.py
+                $<TARGET_FILE:ssldump>
+                ${PROJECT_SOURCE_DIR}/samples
+        )
     endif()
 endif()
 

@@ -1,0 +1,36 @@
+Start testing: Nov 19 00:28 CST
+----------------------------------------------------------
+1/2 Testing: fan1_x509
+1/2 Test: fan1_x509
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid26318/tests/test_fan1_x509.py" "/home/dev/feedback/uid26318/build/ssldump" "/home/dev/feedback/uid26318/samples/tls1.2_aes256.pcap"
+Directory: /home/dev/feedback/uid26318/build
+"fan1_x509" start time: Nov 19 00:28 CST
+Output:
+----------------------------------------------------------
+Not enough data. Found 176 bytes (expecting 32767)
+Verified 1 FAN/1 X.509 fingerprint(s)
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"fan1_x509" end time: Nov 19 00:28 CST
+"fan1_x509" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: tls13_pcap
+2/2 Test: tls13_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid26318/tests/test_tls13.py" "/home/dev/feedback/uid26318/build/ssldump" "/home/dev/feedback/uid26318/samples"
+Directory: /home/dev/feedback/uid26318/build
+"tls13_pcap" start time: Nov 19 00:28 CST
+Output:
+----------------------------------------------------------
+Verified TLS 1.3 handshake and key log decoding
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"tls13_pcap" end time: Nov 19 00:28 CST
+"tls13_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 19 00:28 CST

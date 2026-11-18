@@ -264,6 +264,10 @@ int ssl_decoder_destroy(ssl_decoder **dp) {
   r_data_destroy(&d->session_id);
   r_data_destroy(&d->PMS);
   r_data_destroy(&d->MS);
+  r_data_destroy(&d->SHTS);
+  r_data_destroy(&d->CHTS);
+  r_data_destroy(&d->STS);
+  r_data_destroy(&d->CTS);
   r_data_destroy(&d->handshake_messages);
   r_data_destroy(&d->session_hash);
   ssl_destroy_rec_decoder(&d->c_to_s);
@@ -392,9 +396,11 @@ int ssl_process_handshake_finished(ssl_obj *ssl, ssl_decoder *dec, Data *data) {
   if(ssl->version == TLSV13_VERSION) {
     if(ssl->direction ==
        DIR_I2R) {  // Change from handshake decoder to data traffic decoder
+      ssl_destroy_rec_decoder(&dec->c_to_s);
       dec->c_to_s = dec->c_to_s_n;
       dec->c_to_s_n = 0;
     } else {
+      ssl_destroy_rec_decoder(&dec->s_to_c);
       dec->s_to_c = dec->s_to_c_n;
       dec->s_to_c_n = 0;
     }
@@ -440,10 +446,20 @@ int ssl_decode_record(ssl_obj *ssl,
     rd = 0;
   state = (direction == DIR_I2R) ? ssl->i_state : ssl->r_state;
 
-  if(ssl->version == TLSV13_VERSION &&
-     ct != 23) {  // Only type 23 is encrypted in tls1.3
-    ssl->record_encryption = REC_PLAINTEXT;
-    return 0;
+  if(ssl->version == TLSV13_VERSION) {
+    /*
+     * TLS 1.3 encrypts handshake, alert and application data in records
+     * whose outer type is application_data. Compatibility CCS records are
+     * still sent as plaintext and must not be treated as encrypted data.
+     */
+    if(ct != 23) {
+      ssl->record_encryption = REC_PLAINTEXT;
+      return 0;
+    }
+    if(!rd) {
+      ssl->record_encryption = REC_CIPHERTEXT;
+      return SSL_NO_DECRYPT;
+    }
   } else if(!rd) {
     if(state & SSL_ST_SENT_CHANGE_CIPHER_SPEC) {
       ssl->record_encryption = REC_CIPHERTEXT;
@@ -1089,20 +1105,28 @@ static int hkdf_expand_label(ssl_obj *ssl,
                              Data *context,
                              uint16_t length,
                              UCHAR **out) {
-  int r = -1;
   size_t outlen = length;
-  EVP_PKEY_CTX *pctx;
+  size_t label_len = 6 + (label ? strlen(label) : 0);
+  size_t hkdf_label_len;
+  EVP_PKEY_CTX *pctx = NULL;
+  Data hkdf_label = {0};
+  UCHAR *ptr = NULL;
+  UCHAR *result = NULL;
 
-  pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+  if(label_len > 255 || !secret || !out)
+    return -1;
 
-  Data hkdf_label;
-  UCHAR *ptr;
+  *out = NULL;
+  hkdf_label_len =
+      2 + 1 + label_len + 1 + (context ? (size_t)context->len : 0);
+  if(!(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)))
+    goto abort;
+  if(!(hkdf_label.data = ptr = malloc(hkdf_label_len)))
+    goto abort;
 
-  // Construct HkdfLabel
-  hkdf_label.data = ptr = malloc(512);
   *(uint16_t *)ptr = ntohs(length);
   ptr += 2;
-  *(uint8_t *)ptr++ = 6 + (label ? strlen(label) : 0);
+  *(uint8_t *)ptr++ = label_len;
   memcpy(ptr, "tls13 ", 6);
   ptr += 6;
   if(label) {
@@ -1116,12 +1140,13 @@ static int hkdf_expand_label(ssl_obj *ssl,
   }
   hkdf_label.len = ptr - hkdf_label.data;
   CRDUMPD("hkdf_label", &hkdf_label);
-  // Load parameters
-  *out = malloc(length);
+
+  if(!(result = malloc(length)))
+    goto abort;
   if(EVP_PKEY_derive_init(pctx) <= 0) {
     fprintf(stderr, "EVP_PKEY_derive_init failed\n");
+    goto abort;
   }
-  /* Error */
   if(EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXPAND_ONLY) <= 0) {
     fprintf(stderr, "EVP_PKEY_CTX_hkdf_mode failed\n");
     goto abort;
@@ -1139,15 +1164,45 @@ static int hkdf_expand_label(ssl_obj *ssl,
     fprintf(stderr, "EVP_PKEY_CTX_add1_hkdf_info failed\n");
     goto abort;
   }
-  if(EVP_PKEY_derive(pctx, *out, &outlen) <= 0) {
+  if(EVP_PKEY_derive(pctx, result, &outlen) <= 0) {
     fprintf(stderr, "EVP_PKEY_derive failed\n");
     goto abort;
   }
 
-  CRDUMP("out_hkdf", *out, outlen);
+  CRDUMP("out_hkdf", result, outlen);
+  *out = result;
+  free(hkdf_label.data);
+  EVP_PKEY_CTX_free(pctx);
   return 0;
 abort:
   ERR_print_errors_fp(stderr);
+  free(result);
+  free(hkdf_label.data);
+  EVP_PKEY_CTX_free(pctx);
+  return -1;
+}
+
+static int tls13_create_decoder_from_secret(ssl_obj *ssl,
+                                            Data *secret,
+                                            ssl_rec_decoder **decoder) {
+  int r = -1;
+  UCHAR *key = NULL;
+  UCHAR *iv = NULL;
+
+  if(!secret)
+    return 0;
+
+  if(hkdf_expand_label(ssl, ssl->decoder, secret, "key", NULL,
+                       ssl->cs->eff_bits / 8, &key))
+    goto abort;
+  if(hkdf_expand_label(ssl, ssl->decoder, secret, "iv", NULL, 12, &iv))
+    goto abort;
+
+  r = ssl_create_rec_decoder(decoder, ssl, NULL, key, iv);
+
+abort:
+  free(key);
+  free(iv);
   return r;
 }
 
@@ -1161,6 +1216,9 @@ int ssl_tls13_update_keying_material(ssl_obj *ssl,
   UCHAR *newkey;
   UCHAR *newiv;
 
+  if(!ssl || !d || !ssl->cs)
+    return -1;
+
   if(direction == DIR_I2R) {
     secret = d->CTS;
     decoder = d->c_to_s;
@@ -1168,81 +1226,43 @@ int ssl_tls13_update_keying_material(ssl_obj *ssl,
     secret = d->STS;
     decoder = d->s_to_c;
   }
-  hkdf_expand_label(ssl, d, secret, "traffic upd", NULL, ssl->cs->dig_len,
-                    &newsecret);
+  if(!secret || !decoder)
+    return -1;
+  if(hkdf_expand_label(ssl, d, secret, "traffic upd", NULL, ssl->cs->dig_len,
+                       &newsecret))
+    return -1;
+  free(secret->data);
   secret->data = newsecret;
-  hkdf_expand_label(ssl, d, secret, "key", NULL, ssl->cs->eff_bits / 8,
-                    &newkey);
-  hkdf_expand_label(ssl, d, secret, "iv", NULL, 12, &newiv);
+  if(hkdf_expand_label(ssl, d, secret, "key", NULL, ssl->cs->eff_bits / 8,
+                       &newkey))
+    return -1;
+  if(hkdf_expand_label(ssl, d, secret, "iv", NULL, 12, &newiv)) {
+    free(newkey);
+    return -1;
+  }
   tls13_update_rec_key(decoder, newkey, newiv);
 
   return 0;
 }
 
 int ssl_tls13_generate_keying_material(ssl_obj *ssl, ssl_decoder *d) {
-  int r, _status;
-  UCHAR *s_wk_h, *s_iv_h, *c_wk_h, *c_iv_h, *s_wk, *s_iv, *c_wk, *c_iv;
-  if(!(d->ctx->ssl_key_log_file && ssl_read_key_log_file(ssl, d) == 0 &&
-       d->SHTS && d->CHTS && d->STS && d->CTS)) {
-    ABORT(-1);
-  }
-  // It is 12 for all ciphers
-  if(hkdf_expand_label(ssl, d, d->SHTS, "key", NULL, ssl->cs->eff_bits / 8,
-                       &s_wk_h)) {
-    fprintf(stderr, "s_wk_h hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->SHTS, "iv", NULL, 12, &s_iv_h)) {
-    fprintf(stderr, "s_iv_h hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->CHTS, "key", NULL, ssl->cs->eff_bits / 8,
-                       &c_wk_h)) {
-    fprintf(stderr, "c_wk_h hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->CHTS, "iv", NULL, 12, &c_iv_h)) {
-    fprintf(stderr, "c_iv_h hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->STS, "key", NULL, ssl->cs->eff_bits / 8,
-                       &s_wk)) {
-    fprintf(stderr, "s_wk hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->STS, "iv", NULL, 12, &s_iv)) {
-    fprintf(stderr, "s_iv hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->CTS, "key", NULL, ssl->cs->eff_bits / 8,
-                       &c_wk)) {
-    fprintf(stderr, "c_wk hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  if(hkdf_expand_label(ssl, d, d->CTS, "iv", NULL, 12, &c_iv)) {
-    fprintf(stderr, "c_iv hkdf_expand_label failed\n");
-    ABORT(-1);
-  }
-  CRDUMP("Server Handshake Write key", s_wk_h, ssl->cs->eff_bits / 8);
-  CRDUMP("Server Handshake IV", s_iv_h, 12);
-  CRDUMP("Client Handshake Write key", c_wk_h, ssl->cs->eff_bits / 8);
-  CRDUMP("Client Handshake IV", c_iv_h, 12);
-  CRDUMP("Server Write key", s_wk, ssl->cs->eff_bits / 8);
-  CRDUMP("Server IV", s_iv, 12);
-  CRDUMP("Client Write key", c_wk, ssl->cs->eff_bits / 8);
-  CRDUMP("Client IV", c_iv, 12);
+  int r = 0;
 
-  if((r = ssl_create_rec_decoder(&d->c_to_s_n, ssl, NULL, c_wk, c_iv)))
-    ABORT(r);
-  if((r = ssl_create_rec_decoder(&d->s_to_c_n, ssl, NULL, s_wk, s_iv)))
-    ABORT(r);
-  if((r = ssl_create_rec_decoder(&d->c_to_s, ssl, NULL, c_wk_h, c_iv_h)))
-    ABORT(r);
-  if((r = ssl_create_rec_decoder(&d->s_to_c, ssl, NULL, s_wk_h, s_iv_h)))
-    ABORT(r);
+  if(!(d->ctx->ssl_key_log_file && ssl_read_key_log_file(ssl, d) == 0 &&
+       (d->SHTS || d->CHTS || d->STS || d->CTS))) {
+    return -1;
+  }
+
+  if((r = tls13_create_decoder_from_secret(ssl, d->CHTS, &d->c_to_s)))
+    return r;
+  if((r = tls13_create_decoder_from_secret(ssl, d->SHTS, &d->s_to_c)))
+    return r;
+  if((r = tls13_create_decoder_from_secret(ssl, d->CTS, &d->c_to_s_n)))
+    return r;
+  if((r = tls13_create_decoder_from_secret(ssl, d->STS, &d->s_to_c_n)))
+    return r;
+
   return 0;
-abort:
-  return _status;
 }
 
 static int ssl_generate_session_hash(ssl_obj *ssl, ssl_decoder *d) {
@@ -1306,91 +1326,87 @@ static int read_hex_string(char *str, UCHAR *buf, int n) {
   }
   return 0;
 }
+static int set_keylog_secret(Data **dst, char *secret, int len) {
+  Data *parsed = NULL;
+  int r;
+
+  if((r = r_data_alloc(&parsed, len)))
+    return r;
+  if(read_hex_string(secret, parsed->data, len)) {
+    r_data_destroy(&parsed);
+    return -1;
+  }
+
+  r_data_destroy(dst);
+  *dst = parsed;
+  return 0;
+}
+
 static int ssl_read_key_log_file(ssl_obj *ssl, ssl_decoder *d) {
-    int r = -1;
-    int _status = -1, n, i;
-    size_t l = 0;
-    char *line = NULL, *d_client_random = NULL, *label = NULL, *client_random = NULL, *secret = NULL;
+  int i;
+  size_t line_len = 0;
+  ssize_t read_len;
+  char *line = NULL;
+  char *client_random_hex = NULL;
 
-    if (!ssl || !d || !d->client_random || !d->client_random->data || !d->ctx || !d->ctx->ssl_key_log_file) {
-        return -1;
+  if(!ssl || !d || !d->client_random || !d->client_random->data || !d->ctx ||
+     !d->ctx->ssl_key_log_file)
+    return -1;
+
+  if(ssl->version == TLSV13_VERSION && !ssl->cs)
+    return -1;
+
+  if(!(client_random_hex = malloc((d->client_random->len * 2) + 1)))
+    return -1;
+  client_random_hex[0] = '\0';
+
+  for(i = 0; i < d->client_random->len; i++) {
+    if(snprintf(client_random_hex + (i * 2), 3, "%02x",
+                d->client_random->data[i]) != 2) {
+      free(client_random_hex);
+      return -1;
+    }
+  }
+
+  while((read_len = getline(&line, &line_len,
+                            d->ctx->ssl_key_log_file)) != -1) {
+    char *label;
+    char *client_random;
+    char *secret;
+
+    while(read_len > 0 &&
+          (line[read_len - 1] == '\n' || line[read_len - 1] == '\r'))
+      line[--read_len] = '\0';
+
+    label = strtok(line, " \t");
+    client_random = strtok(NULL, " \t");
+    secret = strtok(NULL, " \t");
+    if(!label || !client_random || !secret || strlen(client_random) != 64 ||
+       strcmp(client_random, client_random_hex) != 0)
+      continue;
+
+    if(!strcmp(label, "CLIENT_RANDOM")) {
+      if(strlen(secret) == 96)
+        set_keylog_secret(&d->MS, secret, 48);
+      continue;
     }
 
-    if (ssl->version == TLSV13_VERSION && !ssl->cs) {
-        return -1;
-    }
+    if(ssl->version != TLSV13_VERSION || strlen(secret) != ssl->cs->dig_len * 2)
+      continue;
 
-    d_client_random = malloc((d->client_random->len * 2) + 1);
-    if (!d_client_random) {
-        return -1;
-    }
+    if(!strcmp(label, "SERVER_HANDSHAKE_TRAFFIC_SECRET"))
+      set_keylog_secret(&d->SHTS, secret, ssl->cs->dig_len);
+    else if(!strcmp(label, "CLIENT_HANDSHAKE_TRAFFIC_SECRET"))
+      set_keylog_secret(&d->CHTS, secret, ssl->cs->dig_len);
+    else if(!strcmp(label, "SERVER_TRAFFIC_SECRET_0"))
+      set_keylog_secret(&d->STS, secret, ssl->cs->dig_len);
+    else if(!strcmp(label, "CLIENT_TRAFFIC_SECRET_0"))
+      set_keylog_secret(&d->CTS, secret, ssl->cs->dig_len);
+  }
 
-    for (i = 0; i < d->client_random->len; i++) {
-        if (snprintf(d_client_random + (i * 2), 3, "%02x", d->client_random->data[i]) != 2) {
-            ABORT(r);
-        }
-    }
-
-    while ((n = getline(&line, &l, d->ctx->ssl_key_log_file)) != -1) {
-        if (line[n - 1] == '\n') {
-            line[n - 1] = '\0';
-        }
-
-        label = strtok(line, " ");
-        client_random = strtok(NULL, " ");
-        secret = strtok(NULL, " ");
-
-        if (!label || !client_random || strlen(client_random) != 64 || 
-            !secret || (ssl->version == TLSV13_VERSION ? strlen(secret) != ssl->cs->dig_len * 2 : strlen(secret) != 96) ||
-            strncmp(client_random, d_client_random, 64) != 0) {
-            continue;
-        }
-
-        if (!strncmp(label, "CLIENT_RANDOM", 13)) {
-            if ((r = r_data_alloc(&d->MS, 48)) || read_hex_string(secret, d->MS->data, 48)) {
-                ABORT(r);
-            }
-        } else if (ssl->version == TLSV13_VERSION) {
-            if (!strncmp(label, "SERVER_HANDSHAKE_TRAFFIC_SECRET", 31)) {
-                if ((r = r_data_alloc(&d->SHTS, ssl->cs->dig_len)) || 
-                    read_hex_string(secret, d->SHTS->data, ssl->cs->dig_len)) {
-                    ABORT(r);
-                }
-            } else if (!strncmp(label, "CLIENT_HANDSHAKE_TRAFFIC_SECRET", 31)) {
-                if ((r = r_data_alloc(&d->CHTS, ssl->cs->dig_len)) || 
-                    read_hex_string(secret, d->CHTS->data, ssl->cs->dig_len)) {
-                    ABORT(r);
-                }
-            } else if (!strncmp(label, "SERVER_TRAFFIC_SECRET_0", 23)) {
-                if ((r = r_data_alloc(&d->STS, ssl->cs->dig_len)) || 
-                    read_hex_string(secret, d->STS->data, ssl->cs->dig_len)) {
-                    ABORT(r);
-                }
-            } else if (!strncmp(label, "CLIENT_TRAFFIC_SECRET_0", 23)) {
-                if ((r = r_data_alloc(&d->CTS, ssl->cs->dig_len)) || 
-                    read_hex_string(secret, d->CTS->data, ssl->cs->dig_len)) {
-                    ABORT(r);
-                }
-            }
-        }
-      /*
-       Eventually add support for other labels defined here:
-       https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format
-      */
-    }
-
-    _status = 0;
-
-abort:
-    if (d_client_random) {
-        free(d_client_random);
-    }
-    if (line) {
-        free(line);
-    }
-    if (d->ctx->ssl_key_log_file) {
-        fseek(d->ctx->ssl_key_log_file, 0, SEEK_SET);
-    }
-    return _status;
+  free(client_random_hex);
+  free(line);
+  fseek(d->ctx->ssl_key_log_file, 0, SEEK_SET);
+  return 0;
 }
 #endif

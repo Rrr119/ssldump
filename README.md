@@ -17,7 +17,9 @@ connections on the chosen network interface and attempts to interpret
 them as SSLv3/TLS traffic. When it identifies SSLv3/TLS traffic, it
 decodes the records and displays them in a textual form to stdout. If
 provided with the appropriate keying material, it will also decrypt
-the connections and display the application data traffic. It also
+the connections and display the application data traffic. TLS 1.3
+traffic can be decrypted with an `SSLKEYLOGFILE` supplied via `-l`.
+It also
 includes a JSON output option, supports [JA3](https://github.com/salesforce/ja3) and IPv6.
 It also emits passive [FAN/1](https://github.com/fanything-project/fanything) fingerprints for TLS ClientHello/ServerHello messages and X.509 certificates in JSON output.
 
@@ -122,6 +124,10 @@ disabled at configure time with `-DBUILD_TESTING=OFF`.
 The FAN/1 X.509 regression processes the existing TLS 1.2 sample with `-j -N`
 and verifies each certificate fingerprint against its feature string. CI also
 runs this test with AddressSanitizer to detect buffer overflows.
+
+The TLS 1.3 regression uses the packet captures and matching `SSLKEYLOGFILE`
+in `samples/` to verify decrypted EncryptedExtensions, Certificate,
+CertificateVerify, Finished, application data, and key updates.
 
 # Notes
 
