@@ -139,6 +139,27 @@ if(BUILD_TESTING)
                 $<TARGET_FILE:ssldump>
                 ${PROJECT_SOURCE_DIR}/samples/tls1.2_aes256.pcap
         )
+        add_test(NAME keylog_tls12_pcap
+            COMMAND ${Python3_EXECUTABLE}
+                ${PROJECT_SOURCE_DIR}/tests/test_keylog.py
+                $<TARGET_FILE:ssldump>
+                ${PROJECT_SOURCE_DIR}/samples
+                tls12
+        )
+        add_test(NAME keylog_tls13_pcap
+            COMMAND ${Python3_EXECUTABLE}
+                ${PROJECT_SOURCE_DIR}/tests/test_keylog.py
+                $<TARGET_FILE:ssldump>
+                ${PROJECT_SOURCE_DIR}/samples
+                tls13
+        )
+        add_test(NAME keylog_multiflow_pcap
+            COMMAND ${Python3_EXECUTABLE}
+                ${PROJECT_SOURCE_DIR}/tests/test_keylog.py
+                $<TARGET_FILE:ssldump>
+                ${PROJECT_SOURCE_DIR}/samples
+                multiflow
+        )
     endif()
 endif()
 

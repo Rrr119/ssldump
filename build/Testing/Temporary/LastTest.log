@@ -1,0 +1,68 @@
+Start testing: Nov 23 08:10 CST
+----------------------------------------------------------
+1/4 Testing: fan1_x509
+1/4 Test: fan1_x509
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_fan1_x509.py" "/home/dev/feedback/uid34533/build/ssldump" "/home/dev/feedback/uid34533/samples/tls1.2_aes256.pcap"
+Directory: /home/dev/feedback/uid34533/build
+"fan1_x509" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Not enough data. Found 176 bytes (expecting 32767)
+Verified 1 FAN/1 X.509 fingerprint(s)
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"fan1_x509" end time: Nov 23 08:10 CST
+"fan1_x509" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: keylog_tls12_pcap
+2/4 Test: keylog_tls12_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build/ssldump" "/home/dev/feedback/uid34533/samples" "tls12"
+Directory: /home/dev/feedback/uid34533/build
+"keylog_tls12_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: tls12
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_tls12_pcap" end time: Nov 23 08:10 CST
+"keylog_tls12_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: keylog_tls13_pcap
+3/4 Test: keylog_tls13_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build/ssldump" "/home/dev/feedback/uid34533/samples" "tls13"
+Directory: /home/dev/feedback/uid34533/build
+"keylog_tls13_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: tls13
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_tls13_pcap" end time: Nov 23 08:10 CST
+"keylog_tls13_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: keylog_multiflow_pcap
+4/4 Test: keylog_multiflow_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build/ssldump" "/home/dev/feedback/uid34533/samples" "multiflow"
+Directory: /home/dev/feedback/uid34533/build
+"keylog_multiflow_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: multiflow
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_multiflow_pcap" end time: Nov 23 08:10 CST
+"keylog_multiflow_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 23 08:10 CST

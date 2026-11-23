@@ -1,0 +1,5 @@
+fan1_x509 4 0.00571405
+keylog_tls12_pcap 4 0.00672998
+keylog_tls13_pcap 4 0.00611462
+keylog_multiflow_pcap 4 0.00717985
+---

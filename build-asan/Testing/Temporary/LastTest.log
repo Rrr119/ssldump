@@ -1,0 +1,196 @@
+Start testing: Nov 23 08:10 CST
+----------------------------------------------------------
+1/4 Testing: fan1_x509
+1/4 Test: fan1_x509
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_fan1_x509.py" "/home/dev/feedback/uid34533/build-asan/ssldump" "/home/dev/feedback/uid34533/samples/tls1.2_aes256.pcap"
+Directory: /home/dev/feedback/uid34533/build-asan
+"fan1_x509" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+/home/dev/feedback/uid34533/base/network.c:135:38: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/network.c:138:38: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/network.c:143:11: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/network.c:151:23: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/network.c:153:13: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/network.c:171:24: runtime error: member access within misaligned address 0x6fcd1c9e008e for type 'struct ip', which requires 4 byte alignment
+0x6fcd1c9e008e: note: pointer points here
+ 00 00 08 00 45 00  00 3c d2 6e 40 00 40 06  6a 4b 7f 00 00 01 7f 00  00 01 d4 fc 11 51 b4 47  1e ad
+             ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:90:25: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:89:25: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:94:15: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:168:13: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:170:47: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:169:54: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:173:21: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:174:21: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ad 00 00 00 00 a0 02  ff d7 fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:111:41: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 11 51 d4 fc e7 60  b8 72 b4 47 1e ae a0 12  ff cb fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:113:25: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 11 51 d4 fc e7 60  b8 72 b4 47 1e ae a0 12  ff cb fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:114:25: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 11 51 d4 fc e7 60  b8 72 b4 47 1e ae a0 12  ff cb fe 30 00 00 02 04  ff d7 04 02 08 0a
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:130:23: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:143:16: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:232:22: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:251:9: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:254:12: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:257:14: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:279:39: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:280:14: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:320:19: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:440:20: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:328:21: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:346:21: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  1e ae e7 60 b8 73 80 10  02 00 fe 28 00 00 01 01  08 0a fc a4 8a af
+              ^ 
+Not enough data. Found 176 bytes (expecting 32767)
+/home/dev/feedback/uid34533/base/tcppack.c:329:36: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  20 23 e7 60 bd 4b 80 11  02 00 fe 28 00 00 01 01  08 0a fc a4 c0 8d
+              ^ 
+/home/dev/feedback/uid34533/base/tcppack.c:346:21: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  20 23 e7 60 bd 4b 80 11  02 00 fe 28 00 00 01 01  08 0a fc a4 c0 8d
+              ^ 
+/home/dev/feedback/uid34533/ssl/ssl_analyze.c:566:12: runtime error: member access within misaligned address 0x6fcd1c9e00a2 for type 'struct tcphdr', which requires 4 byte alignment
+0x6fcd1c9e00a2: note: pointer points here
+ 7f 00  00 01 d4 fc 11 51 b4 47  20 23 e7 60 bd 4b 80 11  02 00 fe 28 00 00 01 01  08 0a fc a4 c0 8d
+              ^ 
+Verified 1 FAN/1 X.509 fingerprint(s)
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"fan1_x509" end time: Nov 23 08:10 CST
+"fan1_x509" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: keylog_tls12_pcap
+2/4 Test: keylog_tls12_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build-asan/ssldump" "/home/dev/feedback/uid34533/samples" "tls12"
+Directory: /home/dev/feedback/uid34533/build-asan
+"keylog_tls12_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: tls12
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_tls12_pcap" end time: Nov 23 08:10 CST
+"keylog_tls12_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: keylog_tls13_pcap
+3/4 Test: keylog_tls13_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build-asan/ssldump" "/home/dev/feedback/uid34533/samples" "tls13"
+Directory: /home/dev/feedback/uid34533/build-asan
+"keylog_tls13_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: tls13
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_tls13_pcap" end time: Nov 23 08:10 CST
+"keylog_tls13_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: keylog_multiflow_pcap
+4/4 Test: keylog_multiflow_pcap
+Command: "/home/dev/.local/bin/python" "/home/dev/feedback/uid34533/tests/test_keylog.py" "/home/dev/feedback/uid34533/build-asan/ssldump" "/home/dev/feedback/uid34533/samples" "multiflow"
+Directory: /home/dev/feedback/uid34533/build-asan
+"keylog_multiflow_pcap" start time: Nov 23 08:10 CST
+Output:
+----------------------------------------------------------
+Verified keylog decryption: multiflow
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"keylog_multiflow_pcap" end time: Nov 23 08:10 CST
+"keylog_multiflow_pcap" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 23 08:10 CST

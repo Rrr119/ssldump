@@ -94,6 +94,8 @@ _/dev/bpf*_.
 * **-l** _sslkeylogfile_  
   Use _sslkeylogfile_ as the location of the SSLKEYLOGFILE
   (https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format).
+  TLS 1.2 `CLIENT_RANDOM` and TLS 1.3 traffic secrets are matched to each
+  connection by client random.
 * **-n**  
   Don't try to resolve host names from IP addresses.
 * **-N**  
@@ -390,7 +392,9 @@ structures.
 _ssldump_ can decrypt traffic between two hosts if the following two
 conditions are met:
     1. ssldump has the keys.
-    2. Static RSA was used.
+    2. For TLS 1.2 and earlier, static RSA was used or an
+       `SSLKEYLOGFILE` was supplied with `-l`. TLS 1.3 requires an
+       `SSLKEYLOGFILE`.
 In any other case, once encryption starts,
 _ssldump_ will only be able to determine the
 record type. Consider the following section of a trace.

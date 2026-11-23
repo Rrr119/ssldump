@@ -123,6 +123,12 @@ The FAN/1 X.509 regression processes the existing TLS 1.2 sample with `-j -N`
 and verifies each certificate fingerprint against its feature string. CI also
 runs this test with AddressSanitizer to detect buffer overflows.
 
+The key log regressions cover three pcap scenarios: TLS 1.2 with
+`CLIENT_RANDOM`, TLS 1.3 with handshake/application traffic secrets, and a
+merged capture containing three simultaneous connections. The merged test
+checks that secrets are matched to each flow independently while preserving
+the existing text/JSON record output.
+
 # Notes
 
 The "save to pcap" (-w) option by @ryabkov, is heavily based on the work of

@@ -702,6 +702,11 @@ static int decode_HandshakeType_EncryptedExtensions(ssl_obj *ssl,
   int r;
   UINT4 exlen, ex;
   extern decoder extension_decoder[];
+  struct json_object *jobj;
+
+  jobj = ssl->cur_json_st;
+  json_object_object_add(jobj, "handshake_type",
+                         json_object_new_string("EncryptedExtensions"));
 
   SSL_DECODE_UINT16(ssl, 0, 0, data, &exlen);
   LF;
@@ -895,6 +900,11 @@ static int decode_HandshakeType_KeyUpdate(ssl_obj *ssl,
                                           int dir,
                                           segment *seg,
                                           Data *data) {
+  struct json_object *jobj;
+
+  jobj = ssl->cur_json_st;
+  json_object_object_add(jobj, "handshake_type",
+                         json_object_new_string("KeyUpdate"));
   LF;
   ssl_tls13_update_keying_material(ssl, ssl->decoder, dir);
   return 0;

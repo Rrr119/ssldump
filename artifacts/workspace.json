@@ -1,0 +1,17 @@
+{
+  "root": "/home/dev/feedback/uid34533",
+  "B": "/home/dev/feedback/uid34533",
+  "sha": "acf8bf06c49a129761bbd00d4af0c588b5d8716f",
+  "wslDistro": "Ubuntu-26.04",
+  "source": {
+    "owner": "adulau",
+    "repo": "ssldump",
+    "sha": "acf8bf06c49a129761bbd00d4af0c588b5d8716f"
+  },
+  "fork": {
+    "owner": "Rrr119",
+    "repo": "ssldump",
+    "cloneUrl": "https://github.com/Rrr119/ssldump.git"
+  },
+  "at": "2026-11-22T23:38:11.766Z"
+}

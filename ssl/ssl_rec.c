@@ -177,7 +177,14 @@ int ssl_destroy_rec_decoder(ssl_rec_decoder **dp) {
 #define LSB(a) (a & 0xff)
 
 int tls13_update_rec_key(ssl_rec_decoder *d, UCHAR *newkey, UCHAR *newiv) {
+  if(!d || !d->write_key || !d->implicit_iv) {
+    free(newkey);
+    free(newiv);
+    return -1;
+  }
+  free(d->write_key->data);
   d->write_key->data = newkey;
+  free(d->implicit_iv->data);
   d->implicit_iv->data = newiv;
   d->seq = 0;
   return 0;

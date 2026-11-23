@@ -186,6 +186,8 @@ Now you must specify your keyfile every time.
 .BI \-l " sslkeylogfile"
 Use \fIsslkeylogfile\fP as the location of the SSLKEYLOGFILE
 (https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format).
+TLS 1.2 \fICLIENT_RANDOM\fP and TLS 1.3 traffic secrets are matched to each
+connection by client random.
 .TP
 .B \-n
 Don't try to resolve host names from IP addresses.
@@ -551,7 +553,9 @@ conditions are met:
 .RS
 .nf
 1. \fIssldump\fP has the keys.
-2. Static RSA was used.
+2. For TLS 1.2 and earlier, static RSA was used or an
+   \fISSLKEYLOGFILE\fP was supplied with \fB-l\fP. TLS 1.3 requires an
+   \fISSLKEYLOGFILE\fP.
 .fi
 .RE
 In any other case, once encryption starts,
